@@ -30,44 +30,48 @@ ApplicationWindow {
     property var treeModel: [
         {
             id: "root",
-            text: "📁 项目根目录",
+            text: "📁 测试项目",
             expanded: true,
             depth: 0,
             type: "folder",
             children: [
                 {
-                    id: "src",
-                    text: "📂 src",
+                    id: "super",
+                    text: "📂 上部",
                     expanded: true,
                     depth: 1,
                     type: "folder",
                     children: [
-                        { id: "main_cpp", text: "📄 main.cpp", depth: 2, type: "file" },
-                        { id: "mainwindow_h", text: "📄 mainwindow.h", depth: 2, type: "file" },
-                        { id: "mainwindow_cpp", text: "📄 mainwindow.cpp", depth: 2, type: "file" }
+                        { id: "15m-kxb", text: "📄 20m-空心板", depth: 2, type: "file" },
+                        { id: "20m-xxl", text: "📄 20m-小箱梁", depth: 2, type: "file" },
+                        { id: "30m-tl",  text: "📄 20m-T梁", depth: 2, type: "file" },
+                        { id: "30m-bgl", text: "📄 20m-变高梁", depth: 2, type: "file" },
+                        { id: "30m-box", text: "📄 20m-通用箱梁", depth: 2, type: "file" }
                     ]
                 },
                 {
-                    id: "resources",
-                    text: "📂 resources",
+                    id: "sub",
+                    text: "📂 下部",
                     expanded: false,
                     depth: 1,
                     type: "folder",
-                    children: []
+                    children: [
+                        { id: "lbtgj", text: "📄 肋板桥台钢筋图", depth: 2, type: "file" },
+
+                    ]
                 },
                 {
-                    id: "qml",
-                    text: "📂 qml",
+                    id: "total",
+                    text: "📂 总图",
                     expanded: true,
                     depth: 1,
                     type: "folder",
                     children: [
-                        { id: "main_qml", text: "📄 main.qml", depth: 2, type: "file" },
-                        { id: "components", text: "📂 components", depth: 2, type: "folder", children: [] }
+                        { id: "qxt", text: "📄 桥型图", depth: 2, type: "file" }
+                       
                     ]
-                },
-                { id: "cmake", text: "⚙️ CMakeLists.txt", depth: 1, type: "file" },
-                { id: "readme", text: "📄 README.md", depth: 1, type: "file" }
+                }
+             
             ]
         }
     ]
@@ -75,6 +79,41 @@ ApplicationWindow {
     property string selectedNodeId: ""
     property bool showDetailView: false  // 控制是否显示详细视图（上下分栏）
     property real topPanelRatio: 0.4  // 上栏高度比例，默认40%
+    
+    // 根据文件ID确定文件类型
+    function getFileTypeById(nodeId) {
+        var node = findNodeById(nodeId);
+        if (!node) return "generic";
+        
+        console.log("Finding file type for node ID: " + nodeId + ", text: " + node.text);  // 调试信息
+        
+        // 根据文件ID或文件名后缀确定类型
+        if (node.id.indexOf("-kxb") !== -1 || node.text.indexOf("空心板") !== -1) {
+            console.log("Matched hollow slab");  // 调试信息
+            return "hollow_slab";  // 空心板
+        } else if (node.id.indexOf("-xxl") !== -1 || node.text.indexOf("小箱梁") !== -1) {
+            console.log("Matched small box girder");  // 调试信息
+            return "small_box_girder";  // 小箱梁
+        } else if (node.id.indexOf("-tl") !== -1 || node.text.indexOf("T梁") !== -1) {
+            console.log("Matched T girder");  // 调试信息
+            return "t_girder";  // T梁
+        } else if (node.id.indexOf("-bgl") !== -1 || node.text.indexOf("变高梁") !== -1) {
+            console.log("Matched variable height girder");  // 调试信息
+            return "variable_height_girder";  // 变高梁
+        } else if (node.id.indexOf("-box") !== -1 || node.text.indexOf("通用箱梁") !== -1) {
+            console.log("Matched universal box girder");  // 调试信息
+            return "universal_box_girder";  // 通用箱梁
+        } else if (node.id === "lbtgj" || node.text.indexOf("肋板桥台钢筋图") !== -1) {
+            console.log("Matched reinforcement drawing");  // 调试信息
+            return "reinforcement_drawing";  // 钢筋图
+        } else if (node.id === "qxt" || node.text.indexOf("桥型图") !== -1) {
+            console.log("Matched bridge type drawing");  // 调试信息
+            return "bridge_type_drawing";  // 桥型图
+        } else {
+            console.log("Using generic editor");  // 调试信息
+            return "generic";  // 通用文件
+        }
+    }
     
     // 全局右键菜单
     Menu {
@@ -1037,7 +1076,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     
                     Text {
-                        text: showDetailView ? qsTr("📝 文件编辑器") : qsTr("📋 项目介绍")
+                        text: showDetailView ? qsTr("📝 构件编辑器") : qsTr("📋 项目介绍")
                         font.pixelSize: 28
                         font.bold: true
                         color: textColor
@@ -1113,7 +1152,7 @@ ApplicationWindow {
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: qsTr("📝\n\n文件编辑区域\n\n双击文件节点打开编辑器")
+                                    text: qsTr("📝\n\n构件编辑区域\n\n双击构件节点打开编辑器")
                                     color: textColor
                                     font.pixelSize: 16
                                     horizontalAlignment: Text.AlignHCenter
@@ -1183,78 +1222,25 @@ ApplicationWindow {
                                         }
                                     }
                                     
-                                    // 文件名输入
-                                    RowLayout {
-                                        Layout.fillWidth: true
+                                    // 定义不同类型的编辑器组件
+                                    component GenericComponentEditor: ColumnLayout {
+                                        id: genericEditor
                                         
-                                        Text {
-                                            text: "文件名:"
-                                            color: textColor
-                                            font.pixelSize: 14
-                                            Layout.preferredWidth: 80
-                                        }
-                                        
-                                        TextField {
-                                            id: fileNameField
+                                        // 构件名输入
+                                        RowLayout {
                                             Layout.fillWidth: true
-                                            placeholderText: "请输入文件名"
                                             
-                                            background: Rectangle {
-                                                color: surfaceColor
-                                                border.color: borderColor
-                                                border.width: 1
-                                                radius: 6
+                                            Text {
+                                                text: "构件名:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 80
                                             }
-                                        }
-                                    }
-                                    
-                                    // 文件类型
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        
-                                        Text {
-                                            text: "文件类型:"
-                                            color: textColor
-                                            font.pixelSize: 14
-                                            Layout.preferredWidth: 80
-                                        }
-                                        
-                                        ComboBox {
-                                            id: fileTypeCombo
-                                            Layout.fillWidth: true
-                                            model: ["CAD模型", "3D模型", "文本文件", "图片文件"]
                                             
-                                            background: Rectangle {
-                                                color: surfaceColor
-                                                border.color: borderColor
-                                                border.width: 1
-                                                radius: 6
-                                            }
-                                        }
-                                    }
-                                    
-                                    // 描述信息
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        Layout.alignment: Qt.AlignTop
-                                        
-                                        Text {
-                                            text: "描述:"
-                                            color: textColor
-                                            font.pixelSize: 14
-                                            Layout.preferredWidth: 80
-                                            Layout.alignment: Qt.AlignTop
-                                        }
-                                        
-                                        ScrollView {
-                                            Layout.fillWidth: true
-                                            Layout.preferredHeight: 80
-                                            clip: true
-                                            
-                                            TextArea {
-                                                id: descriptionArea
-                                                placeholderText: "请输入文件描述..."
-                                                wrapMode: TextArea.Wrap
+                                            TextField {
+                                                id: fileNameField
+                                                Layout.fillWidth: true
+                                                placeholderText: "请输入构件名"
                                                 
                                                 background: Rectangle {
                                                     color: surfaceColor
@@ -1264,60 +1250,1787 @@ ApplicationWindow {
                                                 }
                                             }
                                         }
+                                        
+                                        // 文件类型
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "构件类型:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 80
+                                            }
+                                            
+                                            ComboBox {
+                                                id: fileTypeCombo
+                                                Layout.fillWidth: true
+                                                model: ["CAD模型", "3D模型", "构件文件", "图纸文件"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 描述信息
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Layout.alignment: Qt.AlignTop
+                                            
+                                            Text {
+                                                text: "描述:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 80
+                                                Layout.alignment: Qt.AlignTop
+                                            }
+                                            
+                                            ScrollView {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 80
+                                                clip: true
+                                                
+                                                TextArea {
+                                                    id: descriptionArea
+                                                    placeholderText: "请输入构件描述..."
+                                                    wrapMode: TextArea.Wrap
+                                                    
+                                                    background: Rectangle {
+                                                        color: surfaceColor
+                                                        border.color: borderColor
+                                                        border.width: 1
+                                                        radius: 6
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存构件属性: " + fileNameField.text
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    fileNameField.text = ""
+                                                    fileTypeCombo.currentIndex = 0
+                                                    descriptionArea.text = ""
+                                                    statusText.text = "已重置表单"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
                                     }
                                     
-                                    // 操作按钮
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 12
+                                    component HollowSlabEditor: ColumnLayout {
+                                        id: hollowSlabEditor
                                         
-                                        Button {
-                                            text: "💾 保存"
-                                            
-                                            background: Rectangle {
-                                                color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
-                                                radius: 6
-                                            }
-                                            
-                                            contentItem: Text {
-                                                text: parent.text
-                                                font.pixelSize: 14
-                                                color: "white"
-                                                horizontalAlignment: Text.AlignHCenter
-                                                verticalAlignment: Text.AlignVCenter
-                                            }
-                                            
-                                            onClicked: {
-                                                statusText.text = "已保存文件属性: " + fileNameField.text
-                                            }
+                                        Text {
+                                            text: "🪨 空心板参数设置"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                            color: textColor
                                         }
                                         
-                                        Button {
-                                            text: "🔄 重置"
-                                            
-                                            background: Rectangle {
-                                                color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
-                                                radius: 6
-                                            }
-                                            
-                                            contentItem: Text {
-                                                text: parent.text
-                                                font.pixelSize: 14
-                                                color: "white"
-                                                horizontalAlignment: Text.AlignHCenter
-                                                verticalAlignment: Text.AlignVCenter
-                                            }
-                                            
-                                            onClicked: {
-                                                fileNameField.text = ""
-                                                fileTypeCombo.currentIndex = 0
-                                                descriptionArea.text = ""
-                                                statusText.text = "已重置表单"
-                                            }
-                                        }
-                                        
-                                        Item {
+                                        // 长度
+                                        RowLayout {
                                             Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "长度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: lengthField
+                                                Layout.fillWidth: true
+                                                text: "20"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 100; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 宽度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "宽度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: widthField
+                                                Layout.fillWidth: true
+                                                text: "1.0"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 高度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "高度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: heightField
+                                                Layout.fillWidth: true
+                                                text: "0.5"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 5; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 孔数
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "孔数:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            SpinBox {
+                                                id: holeCountBox
+                                                Layout.fillWidth: true
+                                                from: 1
+                                                to: 10
+                                                value: 3
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 材料
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "材料:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: materialCombo
+                                                Layout.fillWidth: true
+                                                model: ["混凝土C30", "混凝土C40", "混凝土C50", "预应力混凝土"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存参数"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存空心板参数: " + lengthField.text + "m × " + widthField.text + "m × " + heightField.text + "m"
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    lengthField.text = "20"
+                                                    widthField.text = "1.0"
+                                                    heightField.text = "0.5"
+                                                    holeCountBox.value = 3
+                                                    materialCombo.currentIndex = 0
+                                                    statusText.text = "已重置空心板参数"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                    
+                                    component SmallBoxGirderEditor: ColumnLayout {
+                                        id: smallBoxGirderEditor
+                                        
+                                        Text {
+                                            text: "🏗️ 小箱梁参数设置"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                            color: textColor
+                                        }
+                                        
+                                        // 跨径
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "跨径 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: spanField
+                                                Layout.fillWidth: true
+                                                text: "20"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 100; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 梁高
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "梁高 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: girderHeightField
+                                                Layout.fillWidth: true
+                                                text: "1.2"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 顶板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "顶板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: topSlabThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.18"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 腹板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "腹板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: webThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.18"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 底板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "底板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: bottomSlabThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.18"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 材料
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "材料:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: girderMaterialCombo
+                                                Layout.fillWidth: true
+                                                model: ["预应力混凝土", "混凝土C50", "混凝土C40"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存参数"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存小箱梁参数: 跨径" + spanField.text + "m, 梁高" + girderHeightField.text + "m"
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    spanField.text = "20"
+                                                    girderHeightField.text = "1.2"
+                                                    topSlabThicknessField.text = "0.18"
+                                                    webThicknessField.text = "0.18"
+                                                    bottomSlabThicknessField.text = "0.18"
+                                                    girderMaterialCombo.currentIndex = 0
+                                                    statusText.text = "已重置小箱梁参数"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                    
+                                    component TGirderEditor: ColumnLayout {
+                                        id: tGirderEditor
+                                        
+                                        Text {
+                                            text: "🏗️ T梁参数设置"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                            color: textColor
+                                        }
+                                        
+                                        // 跨径
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "跨径 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: tSpanField
+                                                Layout.fillWidth: true
+                                                text: "30"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 100; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 梁高
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "梁高 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: tGirderHeightField
+                                                Layout.fillWidth: true
+                                                text: "2.0"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 上翼缘宽度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "上翼缘宽度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: topFlangeWidthField
+                                                Layout.fillWidth: true
+                                                text: "1.8"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 上翼缘厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "上翼缘厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: topFlangeThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.18"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 腹板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "腹板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: tWebThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.2"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 材料
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "材料:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: tGirderMaterialCombo
+                                                Layout.fillWidth: true
+                                                model: ["预应力混凝土", "混凝土C50", "混凝土C40"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存参数"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存T梁参数: 跨径" + tSpanField.text + "m, 梁高" + tGirderHeightField.text + "m"
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    tSpanField.text = "30"
+                                                    tGirderHeightField.text = "2.0"
+                                                    topFlangeWidthField.text = "1.8"
+                                                    topFlangeThicknessField.text = "0.18"
+                                                    tWebThicknessField.text = "0.2"
+                                                    tGirderMaterialCombo.currentIndex = 0
+                                                    statusText.text = "已重置T梁参数"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                    
+                                    component VariableHeightGirderEditor: ColumnLayout {
+                                        id: variableHeightGirderEditor
+                                        
+                                        Text {
+                                            text: "🏗️ 变高梁参数设置"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                            color: textColor
+                                        }
+                                        
+                                        // 跨径
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "跨径 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: vhSpanField
+                                                Layout.fillWidth: true
+                                                text: "30"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 100; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 支点梁高
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "支点梁高 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: supportHeightField
+                                                Layout.fillWidth: true
+                                                text: "2.5"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 跨中梁高
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "跨中梁高 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: midHeightField
+                                                Layout.fillWidth: true
+                                                text: "1.5"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 上翼缘宽度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "上翼缘宽度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: vhTopFlangeWidthField
+                                                Layout.fillWidth: true
+                                                text: "2.0"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 上翼缘厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "上翼缘厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: vhTopFlangeThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.2"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 腹板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "腹板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: vhWebThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.25"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 材料
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "材料:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: vhGirderMaterialCombo
+                                                Layout.fillWidth: true
+                                                model: ["预应力混凝土", "混凝土C50", "混凝土C40"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存参数"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存变高梁参数: 跨径" + vhSpanField.text + "m, 支点梁高" + supportHeightField.text + "m"
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    vhSpanField.text = "30"
+                                                    supportHeightField.text = "2.5"
+                                                    midHeightField.text = "1.5"
+                                                    vhTopFlangeWidthField.text = "2.0"
+                                                    vhTopFlangeThicknessField.text = "0.2"
+                                                    vhWebThicknessField.text = "0.25"
+                                                    vhGirderMaterialCombo.currentIndex = 0
+                                                    statusText.text = "已重置变高梁参数"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                    
+                                    component UniversalBoxGirderEditor: ColumnLayout {
+                                        id: universalBoxGirderEditor
+                                        
+                                        Text {
+                                            text: "🏗️ 通用箱梁参数设置"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                            color: textColor
+                                        }
+                                        
+                                        // 跨径
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "跨径 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: ubSpanField
+                                                Layout.fillWidth: true
+                                                text: "30"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 100; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 梁高
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "梁高 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: ubGirderHeightField
+                                                Layout.fillWidth: true
+                                                text: "2.0"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 10; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 顶板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "顶板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: ubTopSlabThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.25"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 腹板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "腹板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: ubWebThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.25"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 底板厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "底板厚度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: ubBottomSlabThicknessField
+                                                Layout.fillWidth: true
+                                                text: "0.25"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 1; decimals: 3 }
+                                            }
+                                        }
+                                        
+                                        // 箱室断面
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "箱室断面:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: boxSectionCombo
+                                                Layout.fillWidth: true
+                                                model: ["单箱单室", "单箱双室", "单箱三室", "双箱单室"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 材料
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "材料:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: ubGirderMaterialCombo
+                                                Layout.fillWidth: true
+                                                model: ["预应力混凝土", "混凝土C50", "混凝土C40"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存参数"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存通用箱梁参数: 跨径" + ubSpanField.text + "m, 梁高" + ubGirderHeightField.text + "m"
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    ubSpanField.text = "30"
+                                                    ubGirderHeightField.text = "2.0"
+                                                    ubTopSlabThicknessField.text = "0.25"
+                                                    ubWebThicknessField.text = "0.25"
+                                                    ubBottomSlabThicknessField.text = "0.25"
+                                                    boxSectionCombo.currentIndex = 0
+                                                    ubGirderMaterialCombo.currentIndex = 0
+                                                    statusText.text = "已重置通用箱梁参数"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                    
+                                    component ReinforcementDrawingEditor: ColumnLayout {
+                                        id: reinforcementDrawingEditor
+                                        
+                                        Text {
+                                            text: "📐 钢筋图参数设置"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                            color: textColor
+                                        }
+                                        
+                                        // 图纸编号
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "图纸编号:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: drawingNumberField
+                                                Layout.fillWidth: true
+                                                text: "LBTGJ-001"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 结构部位
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "结构部位:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: structurePartField
+                                                Layout.fillWidth: true
+                                                text: "肋板桥台"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 钢筋等级
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "钢筋等级:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: rebarGradeCombo
+                                                Layout.fillWidth: true
+                                                model: ["HPB300", "HRB400", "HRB500", "HRBF400", "HRBF500"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 混凝土强度等级
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "混凝土等级:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: concreteGradeCombo
+                                                Layout.fillWidth: true
+                                                model: ["C30", "C35", "C40", "C45", "C50", "C55", "C60"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 保护层厚度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "保护层 (mm):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            SpinBox {
+                                                id: coverThicknessBox
+                                                Layout.fillWidth: true
+                                                from: 20
+                                                to: 100
+                                                value: 40
+                                                stepSize: 5
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 钢筋信息
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Layout.alignment: Qt.AlignTop
+                                            
+                                            Text {
+                                                text: "钢筋信息:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                                Layout.alignment: Qt.AlignTop
+                                            }
+                                            
+                                            ScrollView {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 100
+                                                clip: true
+                                                
+                                                TextArea {
+                                                    id: rebarInfoArea
+                                                    placeholderText: "请输入钢筋详细信息..."
+                                                    wrapMode: TextArea.Wrap
+                                                    text: "主筋: HRB400, 直径25mm, 间距150mm\n箍筋: HPB300, 直径10mm, 间距200mm\n分布筋: HRB400, 直径16mm, 间距200mm"
+                                                    
+                                                    background: Rectangle {
+                                                        color: surfaceColor
+                                                        border.color: borderColor
+                                                        border.width: 1
+                                                        radius: 6
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存参数"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存钢筋图参数: " + drawingNumberField.text + " - " + structurePartField.text
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    drawingNumberField.text = "LBTGJ-001"
+                                                    structurePartField.text = "肋板桥台"
+                                                    rebarGradeCombo.currentIndex = 1
+                                                    concreteGradeCombo.currentIndex = 2
+                                                    coverThicknessBox.value = 40
+                                                    rebarInfoArea.text = "主筋: HRB400, 直径25mm, 间距150mm\n箍筋: HPB300, 直径10mm, 间距200mm\n分布筋: HRB400, 直径16mm, 间距200mm"
+                                                    statusText.text = "已重置钢筋图参数"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                    
+                                    component BridgeTypeDrawingEditor: ColumnLayout {
+                                        id: bridgeTypeDrawingEditor
+                                        
+                                        Text {
+                                            text: "🌉 桥型图参数设置"
+                                            font.pixelSize: 16
+                                            font.bold: true
+                                            color: textColor
+                                        }
+                                        
+                                        // 桥梁名称
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "桥梁名称:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: bridgeNameField
+                                                Layout.fillWidth: true
+                                                text: "示例桥梁"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 桥梁类型
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "桥梁类型:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: bridgeTypeCombo
+                                                Layout.fillWidth: true
+                                                model: ["梁桥", "拱桥", "悬索桥", "斜拉桥", "刚构桥"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 桥跨布置
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "桥跨布置:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: spanLayoutField
+                                                Layout.fillWidth: true
+                                                text: "3×30m简支梁"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 桥面宽度
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "桥面宽度 (m):"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            TextField {
+                                                id: deckWidthField
+                                                Layout.fillWidth: true
+                                                text: "12.0"
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                                
+                                                validator: DoubleValidator { bottom: 0; top: 100; decimals: 2 }
+                                            }
+                                        }
+                                        
+                                        // 设计荷载
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            
+                                            Text {
+                                                text: "设计荷载:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                            }
+                                            
+                                            ComboBox {
+                                                id: designLoadCombo
+                                                Layout.fillWidth: true
+                                                model: ["公路-I级", "公路-II级", "城-A级", "城-B级", "铁路中-活载"]
+                                                
+                                                background: Rectangle {
+                                                    color: surfaceColor
+                                                    border.color: borderColor
+                                                    border.width: 1
+                                                    radius: 6
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 结构信息
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            Layout.alignment: Qt.AlignTop
+                                            
+                                            Text {
+                                                text: "结构信息:"
+                                                color: textColor
+                                                font.pixelSize: 14
+                                                Layout.preferredWidth: 100
+                                                Layout.alignment: Qt.AlignTop
+                                            }
+                                            
+                                            ScrollView {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 100
+                                                clip: true
+                                                
+                                                TextArea {
+                                                    id: structureInfoArea
+                                                    placeholderText: "请输入结构详细信息..."
+                                                    wrapMode: TextArea.Wrap
+                                                    text: "上部结构: 30m预应力混凝土简支梁\n下部结构: 桩柱式桥台\n基础: 钻孔灌注桩\n支座: 板式橡胶支座"
+                                                    
+                                                    background: Rectangle {
+                                                        color: surfaceColor
+                                                        border.color: borderColor
+                                                        border.width: 1
+                                                        radius: 6
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 操作按钮
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 12
+                                            
+                                            Button {
+                                                text: "💾 保存参数"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#1d4ed8" : (parent.hovered ? "#2563eb" : primaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    statusText.text = "已保存桥型图参数: " + bridgeNameField.text + " - " + bridgeTypeCombo.currentText
+                                                }
+                                            }
+                                            
+                                            Button {
+                                                text: "🔄 重置"
+                                                
+                                                background: Rectangle {
+                                                    color: parent.pressed ? "#6b7280" : (parent.hovered ? "#9ca3af" : secondaryColor)
+                                                    radius: 6
+                                                }
+                                                
+                                                contentItem: Text {
+                                                    text: parent.text
+                                                    font.pixelSize: 14
+                                                    color: "white"
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    verticalAlignment: Text.AlignVCenter
+                                                }
+                                                
+                                                onClicked: {
+                                                    bridgeNameField.text = "示例桥梁"
+                                                    bridgeTypeCombo.currentIndex = 0
+                                                    spanLayoutField.text = "3×30m简支梁"
+                                                    deckWidthField.text = "12.0"
+                                                    designLoadCombo.currentIndex = 0
+                                                    structureInfoArea.text = "上部结构: 30m预应力混凝土简支梁\n下部结构: 桩柱式桥台\n基础: 钻孔灌注桩\n支座: 板式橡胶支座"
+                                                    statusText.text = "已重置桥型图参数"
+                                                }
+                                            }
+                                            
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+                                    
+                                    // 根据构件类型显示不同的编辑界面
+                                    Loader {
+                                        id: editorLoader
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        sourceComponent: {
+                                            var fileType = getFileTypeById(selectedNodeId);
+                                            console.log("Loading editor for component type: " + fileType + ", selected node ID: " + selectedNodeId);  // 调试信息
+                                            switch(fileType) {
+                                                case "hollow_slab":
+                                                    console.log("Loading hollow slab editor");  // 调试信息
+                                                    return hollowSlabEditor;
+                                                case "small_box_girder":
+                                                    console.log("Loading small box girder editor");  // 调试信息
+                                                    return smallBoxGirderEditor;
+                                                case "t_girder":
+                                                    console.log("Loading T girder editor");  // 调试信息
+                                                    return tGirderEditor;
+                                                case "variable_height_girder":
+                                                    console.log("Loading variable height girder editor");  // 调试信息
+                                                    return variableHeightGirderEditor;
+                                                case "universal_box_girder":
+                                                    console.log("Loading universal box girder editor");  // 调试信息
+                                                    return universalBoxGirderEditor;
+                                                case "reinforcement_drawing":
+                                                    console.log("Loading reinforcement drawing editor");  // 调试信息
+                                                    return reinforcementDrawingEditor;
+                                                case "bridge_type_drawing":
+                                                    console.log("Loading bridge type drawing editor");  // 调试信息
+                                                    return bridgeTypeDrawingEditor;
+                                                default:
+                                                    console.log("Loading generic component editor");  // 调试信息
+                                                    return genericComponentEditor;
+                                            }
                                         }
                                     }
                                 }
@@ -1842,10 +3555,11 @@ ApplicationWindow {
                 if (nodeType === "folder") {
                     toggleNodeExpansion(nodeId)
                 } else if (nodeType === "file") {
-                    // 双击文件节点，显示详细视图
+                    // 双击构件节点，显示详细视图
                     showDetailView = true
                     selectedNodeId = nodeId
-                    statusText.text = "打开文件: " + itemText
+                    console.log("Double clicked component node: " + nodeId);  // 调试信息
+                    statusText.text = "打开构件: " + itemText
                 }
             }
         }
