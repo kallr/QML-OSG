@@ -1,0 +1,86 @@
+/* 现代化QML应用的Qt样式表 */
+/* 主要用于原生Qt控件的主题设置 */
+
+QMainWindow, QDialog {
+    background-color: #0d1421;
+    color: #f1f5f9;
+}
+
+/* 标题栏样式（对某些Qt控件有效） */
+QMenuBar {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #2563eb;
+    font-size: 14px;
+}
+
+QMenuBar::item {
+    background-color: transparent;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+QMenuBar::item:selected {
+    background-color: #3b82f6;
+    color: white;
+}
+
+QMenu {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #2563eb;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QMenu::item {
+    background-color: transparent;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+QMenu::item:selected {
+    background-color: #3b82f6;
+    color: white;
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: #334155;
+    margin: 4px 8px;
+}
+
+/* 工具提示 */
+QToolTip {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 12px;
+}
+
+/* 滚动条 */
+QScrollBar:vertical {
+    background-color: #1e293b;
+    width: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #3b82f6;
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #2563eb;
+}
+
+/* 状态栏 */
+QStatusBar {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-top: 1px solid #334155;
+}
